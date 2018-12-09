@@ -89,34 +89,33 @@ def depthFirstSearch(problem):
     "*** YOUR CODE HERE ***"
     stack = util.Stack()
     stack.push((problem.getStartState(), []))
-    visited = []
+    visited = set()
     while not stack.isEmpty():
         state, actions = stack.pop()
+        visited.add(state)
         if problem.isGoalState(state):
             return actions
-        if state not in visited:
-            visited.append(state)
-            successors = problem.getSuccessors(state)
-            for _state, _action, _cost in successors:
+        successors = problem.getSuccessors(state)
+        for _state, _action, _cost in successors:
+            if _state not in visited:
                 stack.push((_state, actions + [_action]))
-    return []
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     queue = util.Queue()
     queue.push((problem.getStartState(), []))
-    visited = []
+    visited = set()
+    visited.add(problem.getStartState())
     while not queue.isEmpty():
         state, actions = queue.pop()
         if problem.isGoalState(state):
             return actions
-        if state not in visited:
-            visited.append(state)
-            successors = problem.getSuccessors(state)
-            for _state,_action,_cost in successors:
-                queue.push((_state, actions + [_action]))
-    return []
+        successors = problem.getSuccessors(state)
+        for s,a,c in successors:
+            if s not in visited:
+                queue.push((s, actions + [a]))
+                visited.add(s)
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -148,25 +147,20 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
     pqueue = util.PriorityQueue()
-    pqueue.push((problem.getStartState(), []), 0)
-    visited = []
+    h = heuristic(problem.getStartState(), problem)
+    pqueue.push((problem.getStartState(), [], 0), h)
+    visited = set()
     while not pqueue.isEmpty():
-        state, actions = pqueue.pop()
+        state, actions, cost = pqueue.pop()
         if problem.isGoalState(state):
             return actions
         if state not in visited:
-            visited.append(state)
+            visited.add(state)
             successors = problem.getSuccessors(state)
-            # for s,a,c in successors:
-            #     if s not in visited:
-            #         h = heuristic(s, problem)
-            #         pqueue.push((s, actions + [a], cost + c), cost + c + h)
-            for _state,_action,_cost in successors:
-                if _state not in visited:
-                    heur = heuristic(_state, problem) + problem.getCostOfActions(actions + [_action])
-                    pqueue.push((_state, actions + [_action]), heur)
-    return []
-
+            for s,a,c in successors:
+                if s not in visited:
+                    h = heuristic(s, problem)
+                    pqueue.push((s, actions + [a], cost + c), cost + c + h)
 
 
 # Abbreviations
