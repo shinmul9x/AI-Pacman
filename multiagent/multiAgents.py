@@ -74,7 +74,24 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        foodPos = newFood.asList() #get food position
+        foodCount = len(foodPos) #get num of food
+        closestDistance = 1e6
+        for i in xrange(foodCount):
+          distance = manhattanDistance(foodPos[i],newPos) + foodCount*100
+          if distance < closestDistance:
+            closestDistance = distance
+        if foodCount == 0 :
+          closestDistance = 0
+        score = -closestDistance
+
+        for i in xrange(len(newGhostStates)):
+          ghostPos = successorGameState.getGhostPosition(i+1)
+          if manhattanDistance(newPos,ghostPos)<=1 :
+            score -= 1e6
+
+        # return successorGameState.getScore()
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -129,7 +146,42 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # apply for pacman
+        def maxValue(state, depth):
+          value = -999999
+          if state.isWin() or state.isLose() or (depth + 1) == self.depth: 
+            return self.evaluationFunction(state)
+          actions = state.getLegalActions(0)
+          for action in actions:
+            successor = state.generateSuccessor(0, action)
+            value = max(value, minValue(successor, depth + 1, 1))
+          return value
+        
+        # apply for all ghost
+        def minValue(state, depth, agentIndex):
+          value = 999999
+          if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+          actions = state.getLegalActions(agentIndex)
+          for action in actions:
+            successor = state.generateSuccessor(agentIndex, action)
+            if agentIndex == (state.getNumAgents() - 1):
+              value = min(value, maxValue(successor, depth))
+            else:
+              value = min(value, minValue(successor, depth, agentIndex + 1))
+          return value
+        
+        actions = gameState.getLegalActions(0)
+        currentScore = -999999
+        returnAction = ''
+        for action in actions:
+          nextState = gameState.generateSuccessor(0, action)
+          score = minValue(nextState, 0, 1)
+          if score > currentScore:
+            returnAction = action
+            currentScore = score
+        return returnAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
